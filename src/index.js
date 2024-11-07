@@ -107,3 +107,73 @@ app.post("/tweets", async (req, res) => {
 
 })
 
+app.get("/tweets", async (req, res) => {
+
+    try {
+
+        const users = await db.collection("users").find().toArray();
+        const tweets = await db.collection("tweets").find().toArray();
+
+        const avatarTweets = tweets.map(tweet => {
+            const user = users.find(user => user.username === tweet.username);
+
+            if (user) {
+                return {
+                    _id: tweet._id,
+                    username: tweet.username,
+                    avatar: user.avatar,
+                    tweet: tweet.tweet,
+                };
+            }
+        });
+        return res.send(avatarTweets.reverse()).status(200)
+
+    } catch (err) {
+        return res.sendStatus(500);
+
+    }
+
+})
+
+app.put("/tweets/:id", async (req, res) => {
+
+    const { id } = req.params;
+    const tweet = req.body;
+
+    const tweetSchema = joi.object({
+        username: joi.string().required(),
+        tweet: joi.string().required()
+
+    });
+
+    const validation = tweetSchema.validate(tweet, { abortEarly: false })
+
+    if (validation.error) {
+        const mensagens = validation.error.details.map((detail => detail.message))
+        return res.status(422).send(mensagens)
+    }
+
+    try {
+        const tweetSelected = await db.collection("tweets").updateOne({
+            _id: new ObjectId(id)
+        }, {
+            $set: {
+                username: tweet.username,
+                tweet: tweet.tweet
+            }
+        })
+
+        if(tweetSelected.matchedCount === 0){
+            return res.status(404).send("Esse tweet não existe")
+        }
+        res.send("Tweet atualizado")
+
+    } catch (err) {
+        return res.status(500).send(err.message)
+    }
+
+
+
+
+
+})

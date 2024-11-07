@@ -66,3 +66,44 @@ app.post("/sign-up", async (req, res) => {
 
 
 })
+
+app.post("/tweets", async (req, res) => {
+
+    const { username, tweet } = req.body
+    const tweetPost = req.body
+
+    
+
+    const tweetSchema = joi.object({
+        username: joi.string().required(),
+        tweet: joi.string().required()
+
+    });
+
+    const validation = tweetSchema.validate(tweetPost, { abortEarly: false });
+
+    if (validation.error) {
+        const mensagens = validation.error.details.map((detail) => detail.message)
+        return res.status(422).send(mensagens)
+    }
+
+    try {
+
+        const tweetVerification = await db.collection("tweets").findOne({username: tweetPost.username})
+        
+        if(!tweetVerification){
+            return res.sendStatus(401)
+        }
+
+        await db.collection("tweets").insertOne(tweetPost)
+        res.status(201).send("Tweetado com sucesso")
+
+    } catch (err) {
+        return res.status(500).send(err.message)
+    }
+
+
+
+
+})
+

@@ -177,3 +177,28 @@ app.put("/tweets/:id", async (req, res) => {
 
 
 })
+
+app.delete("/tweets/:id", async (req, res) => {
+    
+    const { id } = req.params;
+
+    try{
+
+        const tweetDeleted = await db.collection("tweets").deleteOne({
+            _id: new ObjectId(id)
+        });
+
+        if(tweetDeleted.deletedCount === 0 ){
+            return res.status(404).send("Esse tweet não existe")
+        }
+
+        return res.status(204).send("Tweet deletado com sucesso")
+
+
+    }catch(err){
+        return res.status(500).send(err.message)
+    }
+
+
+
+})
